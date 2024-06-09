@@ -1,0 +1,6 @@
+VS Native x64 Prompt
+
+mkdir build
+cd build
+cmake -D CMAKE_BUILD_TYPE=Release -G "NMake Makefiles" ..
+nmake

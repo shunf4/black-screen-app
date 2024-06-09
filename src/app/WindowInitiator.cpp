@@ -15,7 +15,7 @@ LRESULT CALLBACK HandleWindowMessages(HWND windowHandle, UINT messageType, WPARA
 std::string WindowInitiator::m_color = "black";
 bool WindowInitiator::disableKeyExit = false;
 
-WindowInitiator::WindowInitiator(std::string color, const bool& disableKeyExit) {
+WindowInitiator::WindowInitiator(std::string color, const bool& disableKeyExit, int x, int y, int w, int h, int opacity) {
     WindowInitiator::disableKeyExit = disableKeyExit;
 
     std::ranges::transform(color, color.begin(),
@@ -23,6 +23,14 @@ WindowInitiator::WindowInitiator(std::string color, const bool& disableKeyExit) 
 
     m_color = color == "black" ? std::move(color) :
               ColorHandler::colorMap.contains(color) ? ColorHandler::colorMap[color] : std::move(color);
+
+    this->x = x;
+    this->y = y;
+    this->opacity = opacity;
+    this->w = w;
+    this->h = h;
+    if (this->x == -1) { this->x = CW_USEDEFAULT; }
+    if (this->y == -1) { if (this->x == CW_USEDEFAULT) { this->y = CW_USEDEFAULT; } else { this->y = 0; } }
 }
 
 void WindowInitiator::createWindow() {
@@ -37,16 +45,24 @@ void WindowInitiator::createWindow() {
         0,
         "BlackWindowClass",
         "Black Screen Application",
-        WS_POPUP | WS_VISIBLE,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        GetSystemMetrics(SM_CXSCREEN),
-        GetSystemMetrics(SM_CYSCREEN),
+        // WS_POPUP | WS_VISIBLE | WS_SYSMENU | WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST,
+        WS_POPUP | WS_VISIBLE | WS_SYSMENU,
+        // WS_EX_APPWINDOW | WS_SYSMENU,
+        x,
+        y,
+        w == -1 ? GetSystemMetrics(SM_CXSCREEN) : w,
+        h == -1 ? GetSystemMetrics(SM_CYSCREEN) : h,
         nullptr,
-        nullptr,
+        HMENU(),
         GetModuleHandle(nullptr),
         nullptr
     );
+
+    LONG cur_style = GetWindowLong(windowHandle, GWL_EXSTYLE);
+    SetWindowLong(windowHandle, GWL_EXSTYLE, cur_style | WS_EX_COMPOSITED | WS_EX_TRANSPARENT | WS_EX_LAYERED);
+    SetWindowPos(windowHandle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    SetLayeredWindowAttributes(windowHandle, 0, (unsigned char)(unsigned)this->opacity, LWA_ALPHA);
 
     ShowCursor(false);
 
@@ -67,7 +83,19 @@ void WindowInitiator::createWindow() {
 }
 
 LRESULT CALLBACK HandleWindowMessages(const HWND windowHandle, const UINT messageType, const WPARAM windowParameterValue, const LPARAM messageData) { // NOLINT(*-misplaced-const)
+    // if (messageType != 28 && messageType != 131 && messageType != 512 && messageType != 129 && messageType != 132 && messageType != 134 && messageType != 6 && messageType != 32 && messageType != 15) {
+    // char a[1000];
+    // _snprintf(a, 1000, "%d", messageType);
+    // MessageBox(NULL, a, a, MB_OK);
+    // }
+
     switch (messageType) {
+        case WM_ENTERMENULOOP:
+            ShowCursor(true);
+            return 0;
+        case WM_EXITMENULOOP:
+            ShowCursor(false);
+            return 0;
         case WM_CLOSE:
         case WM_DESTROY:
             PostQuitMessage(0);

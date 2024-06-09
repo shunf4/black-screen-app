@@ -15,3 +15,4 @@ _deps
 /cmake-build-release/
 /cmake-build-release-x64/
 /cmake-build-release-x86/
+build/

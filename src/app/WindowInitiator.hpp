@@ -13,7 +13,13 @@ public:
     static std::string m_color;
     static bool disableKeyExit;
 
-    explicit WindowInitiator(std::string color, const bool& disableKeyExit);
+    int x;
+    int y;
+    int w;
+    int h;
+    int opacity;
+
+    explicit WindowInitiator(std::string color, const bool& disableKeyExit, int x, int y, int w, int h, int opacity);
     void createWindow();
 };
 
